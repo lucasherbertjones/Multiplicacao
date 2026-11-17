@@ -34,7 +34,11 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
   resultado no modo inverso confunde.
 - `SPECIAL`: notas para as contas que mais confundem (7×8 "5, 6, 7, 8", 6×8 e 7×7, 6×9 e 7×8…).
 - `CONF`: pegadinhas por resultado (48↔49, 54↔56, 63↔64…). `optionsR()` usa, nesta ordem: `CONF`, as
-  contas vizinhas (a×(b±1), (a±1)×b), a soma a+b, os algarismos trocados e, por fim, outros produtos próximos.
+  contas vizinhas (a×(b±1), (a±1)×b), a soma a+b, os algarismos trocados (não quando termina em 0: 30 → "03")
+  e, por fim, outros produtos próximos. As opções ficam em ordem crescente, mas **a posição da certa é
+  sorteada**: primeiro sorteia quantas pegadinhas ficam abaixo e quantas acima. **Lição:** com pegadinhas
+  "vizinhas" e ordem crescente, a certa caía sempre no meio e a criança aprendia a posição, não a conta.
+  Só o 10 × 10 fica sempre por último, porque não há produto acima de 100.
 - `diagnose()` explica o erro: soma no lugar de vezes, conta vizinha ou algarismos trocados.
 
 ## Mecânicas (vindas do jogo de classes gramaticais)
@@ -67,8 +71,12 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
    dominado, a rodada é completada mesmo assim (no mínimo 4 contas), marcadas como revisão.
 7. **Histórico completo**: `[data, tabuada, multiplicador, modo, certo, resposta, acerto, nível, dica, ms,
    rápido]`. Estatísticas por tabuada, domínio por modo, "contas para revisar" e "Copiar CSV".
-8. **Teclado**: 1–9 e 0 respondem pela posição (no modo D a posição é igual ao algarismo; no modo L o
-   0 vale 10), Enter/Espaço continuam, H pede dica e L mostra ou esconde a tabela.
+8. **Teclado: a criança digita o número da resposta**, não a posição do botão (os botões não têm número
+   de posição). 10 = <kbd>1</kbd> <kbd>0</kbd>. Se o que foi digitado só pode ser uma opção, responde na
+   hora; se ainda pode virar outra (digitou 1 e existe 10), mostra o 1 no "?" e espera o próximo
+   algarismo, o Enter ou 1,2 s (`typeKey`). Essa espera não conta no tempo (`kTime`). Backspace apaga.
+   Enter/Espaço continuam, H pede dica e L mostra ou esconde a tabela. **Lição:** responder pela posição
+   confundia: para responder 10, a criança apertava 1 e o jogo marcava o primeiro botão.
 9. **Proteção contra clique duplo**: ignora o segundo clique em menos de 320 ms e cliques em botões que
    acabaram de aparecer (por exemplo, o próximo algarismo). O teclado não sofre esse bloqueio.
 10. **Dica**: elimina metade das opções erradas e mostra a estratégia sem o resultado. O acerto com
@@ -84,6 +92,10 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
     erros no console;
   - semear o `localStorage`: tudo dominado (a rodada não pode ficar vazia), resposta lenta (não mexe no
     domínio) e escrita no nível 11 (etapa 3 em `D:`).
+- Testar também: a posição da certa em `optionsR` é uniforme (≈ 1/n para n = 4, 6, 8, 10); digitar "1" e
+  "0" responde 10; "1" sozinho espera e responde 1 sem contar a espera; dois algarismos no modo resultado.
+- Cuidado com nomes de classe CSS: o espaço da resposta usa `.slot.fill`, porque `.done` já é o texto
+  pequeno e cinza (o número respondido ficou minúsculo por causa disso).
 - Nos testes, espaçar os cliques em mais de 320 ms, ou usar o teclado. Bloquear as Google Fonts no
   teste gera um erro de console esperado ("Failed to load resource").
 

@@ -44,7 +44,7 @@ button:focus-visible,select:focus-visible{outline:3px solid #3b82f6;outline-offs
 .big{font:700 clamp(40px,8vw,68px)/1.1 Literata,serif;display:flex;flex-wrap:wrap;align-items:center;gap:.25em;font-variant-numeric:tabular-nums}
 .slot{display:inline-grid;place-items:center;min-width:.9em;padding:0 .12em;border-bottom:5px solid var(--line);color:var(--mute)}
 .slot.on{border-color:var(--ink);color:var(--ink);animation:pulse 1.1s ease-in-out infinite}
-.slot.done{color:var(--ink)}
+.slot.fill{color:var(--ink)}
 .pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:22px}
 .mode{font-size:12px;font-weight:800;padding:2px 8px;border-radius:20px;background:var(--line);color:var(--mute)}
 .mode.wr{background:#dbeafe;color:#1e3a8a}
@@ -54,8 +54,8 @@ button:focus-visible,select:focus-visible{outline:3px solid #3b82f6;outline-offs
 .tbar i{display:block;height:100%;width:0;background:var(--ok)}
 .tbar.late i{background:var(--late)}
 .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
-.o{display:flex;align-items:center;gap:10px;border:2px solid var(--line);background:var(--card);border-radius:12px;padding:8px 12px;min-height:60px;font:800 26px/1 Nunito,sans-serif;font-variant-numeric:tabular-nums;transition:transform .08s}
-.o .v{flex:1;text-align:center;padding-right:22px}
+.o{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-bottom:5px solid var(--sw);background:var(--card);border-radius:12px;padding:8px 12px;min-height:60px;font:800 26px/1 Nunito,sans-serif;font-variant-numeric:tabular-nums;transition:transform .08s}
+.o .v{flex:1;text-align:center}
 .o:hover:not(:disabled){border-color:var(--sw);transform:translateY(-1px)}
 .o .k{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px;background:var(--sw);color:var(--swt)}
 .o:disabled{opacity:.3;cursor:default}
@@ -111,7 +111,7 @@ select{font:inherit;font-weight:700;border:1px solid var(--line);background:var(
 .htxt{width:100%;height:120px;margin-top:8px;font:12px monospace}
 @media(max-width:600px){.htab{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px}.stack td{display:flow-root;border:0;padding:2px 8px;padding-inline-start:8.5em}.stack td::before{content:attr(data-l);float:inline-start;width:8em;margin-inline-start:-8em;font-size:12px;color:var(--mute)}.stack td:empty{display:none}}
 @media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}.legend{position:static}}
-@media(max-width:600px){.stat span{font-size:11px}.stat b{font-size:16px}.top h1{flex-basis:100%}.opts{grid-template-columns:repeat(3,minmax(0,1fr))}.o{font-size:22px;padding:8px}.o .v{padding-right:0}.sent{gap:10px 6px}}
+@media(max-width:600px){.stat span{font-size:11px}.stat b{font-size:16px}.top h1{flex-basis:100%}.opts{grid-template-columns:repeat(3,minmax(0,1fr))}.o{font-size:22px;padding:8px}.sent{gap:10px 6px}}
 </style>
 <script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
 </head>
@@ -146,7 +146,7 @@ select{font:inherit;font-weight:700;border:1px solid var(--line);background:var(
       <div class="row">
         <button class="btn" id="bHint">Dica (H)</button>
         <button class="btn" id="bSkip">Pular rodada</button>
-        <span>Teclas <kbd>1</kbd>–<kbd>9</kbd> <kbd>0</kbd> para responder · <kbd>Enter</kbd> ou <kbd>Espaço</kbd> para continuar</span>
+        <span>Digite a resposta no teclado (10 = <kbd>1</kbd> <kbd>0</kbd>) · <kbd>Enter</kbd> ou <kbd>Espaço</kbd> para continuar</span>
       </div>
     </div>
   </section>
@@ -354,16 +354,23 @@ function renderLegend(){
 
 const chip=x=>{const c=color(x.a,x.b);return `<span class="chip" style="background:${c.bg};color:${c.fg}">${x.a} × ${x.b} = ${x.p}</span>`;};
 function btnHTML(val,i,x,label){ const L=LEVELS[S.level], c=L.nocolor?{bg:'var(--line)',fg:'var(--ink)'}:color(x.a);
-  return `<button class="o" data-o="${val}" style="--sw:${c.bg};--swt:${c.fg}"><span class="k">${(i+1)%10}</span><span class="v">${label??val}</span></button>`; }
+  return `<button class="o" data-o="${val}" style="--sw:${c.bg};--swt:${c.fg}"><span class="v">${label??val}</span></button>`; }
 function pills(x,txt,cls=''){ $('qPills').innerHTML=`<span class="mode ${cls}">${txt}</span>${x.review?'<span class="mode rev">★ revisão</span>':''}`; }
 
 /* ===== Opções do modo "resultado": a resposta certa e pegadinhas plausíveis, em ordem crescente ===== */
+/* A posição da resposta certa é sorteada (pode ser a 1ª, a última ou qualquer outra): escolhe quantas
+   pegadinhas ficam abaixo e acima dela. Pegadinhas plausíveis primeiro; depois outros produtos da tabuada,
+   os mais próximos antes. */
+const PRODS=[...new Set(Array.from({length:100},(_,i)=>(Math.floor(i/10)+1)*(i%10+1)))];
 function optionsR(x,n){
-  const {a,b,p}=x, set=new Set([p]);
-  const cand=[...(CONF[p]||[]),a*(b+1),a*(b-1),(a+1)*b,(a-1)*b,a+b,+String(p).split('').reverse().join(''),p+10,p-10,p+a,p-a,p+b,p-b];
-  for(const c of cand){ if(set.size>=n) break; if(c>0&&c<=100) set.add(c); }
-  for(let g=0;set.size<n&&g<500;g++){ const c=(1+Math.floor(Math.random()*10))*(1+Math.floor(Math.random()*10)); if(Math.abs(c-p)<=30+g/10) set.add(c); }
-  return [...set].sort((u,v)=>u-v);
+  const {a,b,p}=x;
+  const plaus=[...(CONF[p]||[]),a*(b+1),a*(b-1),(a+1)*b,(a-1)*b,a+b,p%10?+String(p).split('').reverse().join(''):0,p+10,p-10,p+a,p-a,p+b,p-b];
+  const near=PRODS.slice().sort((u,v)=>Math.abs(u-p)-Math.abs(v-p));
+  const side=f=>[...new Set(plaus.concat(near).filter(c=>c>0&&c<=100&&f(c)))];
+  const lo=side(c=>c<p), hi=side(c=>c>p), feas=[];
+  for(let pos=0;pos<n;pos++) if(pos<=lo.length&&n-1-pos<=hi.length) feas.push(pos);
+  const pos=feas[Math.floor(Math.random()*feas.length)];
+  return lo.slice(0,pos).concat([p],hi.slice(0,n-1-pos)).sort((u,v)=>u-v);
 }
 
 /* ================= PERGUNTAS ================= */
@@ -375,7 +382,7 @@ function stopBar(){ clearTimeout(lateT); const b=$('tbar'); const w=getComputedS
 
 function askItem(){
   const x=cur.items[queue[qi]], L=LEVELS[S.level];
-  phase='q'; waiting=false; hintUsed=false; tstep=0;
+  phase='q'; waiting=false; hintUsed=false; tstep=0; kbuf=''; kTime=0; clearTimeout(kT);
   $('fb').innerHTML='';
   renderRound();
   if(x.mode==='R') askR(x); else if(x.mode==='D') askD(x); else if(x.mode==='L') askL(x); else askW(x);
@@ -393,7 +400,7 @@ const DIG=[1,2,3,4,5,6,7,8,9,0];
 const PLACE=['unidade','dezena','centena'];
 function askD(x){
   const d=String(x.p);
-  $('qBig').innerHTML=`<span>${x.a} × ${x.b} =</span>`+[...d].map((c,i)=>`<span class="slot${i===tstep?' on':i<tstep?' done':''}">${i<tstep?c:'?'}</span>`).join('');
+  $('qBig').innerHTML=`<span>${x.a} × ${x.b} =</span>`+[...d].map((c,i)=>`<span class="slot${i===tstep?' on':i<tstep?' fill':''}">${i<tstep?c:'?'}</span>`).join('');
   pills(x,`algarismo por algarismo · ${PLACE[d.length-1-tstep]}`+(d.length>1?` (${tstep+1} de ${d.length})`:''));
   $('opts').innerHTML=DIG.map((o,i)=>btnHTML(o,i,x)).join('');
   $('opts').querySelectorAll('.o').forEach(b=>b.onclick=()=>answerD(b.dataset.o));
@@ -446,8 +453,8 @@ function diagnose(x,ans,partial){
 }
 
 function finish(x,ans,right,partial){
-  const lv=S.level, ms=performance.now()-t0, lim=limitFor(x.mode,lv), fast=ms<=lim;
-  stopBar();
+  const lv=S.level, ms=(kTime||performance.now())-t0, lim=limitFor(x.mode,lv), fast=ms<=lim;
+  stopBar(); kbuf=''; clearTimeout(kT);
   record(x,ans,right,ms,fast);
   x.rev=true; phase='fb'; $('bHint').disabled=true;
   if(right){
@@ -456,7 +463,7 @@ function finish(x,ans,right,partial){
     S.score+=pts; if(!fast) x.slow=true;
     const msg=fast?`⚡ ${sec(ms)}`:`Certo! Levou ${sec(ms)}. Para contar como dominada, tente em até ${sec(lim)}.`;
     $('fb').innerHTML=`<div class="box good"><b>+${pts}</b> ${chip(x)}<span class="ex">${msg}${hintUsed?' · com dica (vale metade e não conta para o domínio)':''}</span></div>`;
-    $('qBig').querySelectorAll('.slot').forEach((s,i)=>{s.classList.remove('on');s.classList.add('done');s.textContent=x.mode==='D'?String(x.p)[i]:x.mode.endsWith('L')?x.b:x.p;});
+    $('qBig').querySelectorAll('.slot').forEach((s,i)=>{s.classList.remove('on');s.classList.add('fill');s.textContent=x.mode==='D'?String(x.p)[i]:x.mode.endsWith('L')?x.b:x.p;});
     renderRound(); updateHUD(); save();
     setTimeout(()=>{ if(phase==='fb'&&!waiting) next(); }, fast?450:1600);
   } else {
@@ -595,6 +602,27 @@ function stats(){
   $('mReset').onclick=e=>{ if(e.target.dataset.c){const o=S.order;S=fresh();S.order=o;save();$('modal').classList.remove('on');updateHUD();renderLegend();newRound();} else {e.target.dataset.c=1;e.target.textContent='Clique de novo para confirmar';} };
 }
 
+/* ===== Teclado: a criança digita o número da resposta (10 = 1 e 0), não a posição do botão.
+   Se o que foi digitado só pode ser uma opção, responde na hora; se ainda pode virar outra
+   (digitou 1 e existe 10), espera o próximo algarismo, o Enter ou 1,2 s. ===== */
+let kbuf='', kT=null, kTime=0; // kTime: quando a criança terminou de digitar (a espera de 1,2 s não conta)
+const optVals=()=>[...$('opts').querySelectorAll('.o:not(:disabled)')].map(b=>b.dataset.o);
+function showBuf(){ const s=$('qBig').querySelector('.slot.on'); if(s) s.textContent=kbuf||'?'; }
+function submitBuf(){ clearTimeout(kT); const v=kbuf; kbuf=''; showBuf();
+  const b=[...$('opts').querySelectorAll('.o')].find(b=>b.dataset.o===v&&!b.disabled); if(b) b.click(); }
+function typeKey(d){
+  const x=curItem(); if(!x||x.mode[0]==='W') return;
+  const vals=optVals();
+  let buf=kbuf+d;
+  if(!vals.some(v=>v.startsWith(buf))) buf=d;            // não combina: recomeça com esta tecla
+  if(!vals.some(v=>v.startsWith(buf))){ kbuf=''; showBuf(); return; }
+  kbuf=buf; clearTimeout(kT);
+  const exact=vals.includes(buf), longer=vals.some(v=>v!==buf&&v.startsWith(buf));
+  kTime=exact?performance.now():0;
+  if(x.mode==='D'||(exact&&!longer)) return submitBuf();
+  showBuf(); if(exact) kT=setTimeout(submitBuf,1200);
+}
+
 /* ================= EVENTOS ================= */
 $('lvSel').innerHTML=LEVELS.slice(1).map((l,i)=>`<option value="${i+1}">Nível ${i+1}: ${l.n}</option>`).join('');
 $('lvSel').onchange=e=>{setLevel(+e.target.value);newRound();};
@@ -620,8 +648,9 @@ $('modal').onclick=e=>{if(e.target.id==='modal')$('modal').classList.remove('on'
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.ctrlKey||e.metaKey||e.altKey) return;
   if($('modal').classList.contains('on')){ if(e.key==='Escape')$('modal').classList.remove('on'); return; }
-  if(e.key==='Enter'||e.key===' '){ if(waiting||phase==='end'){e.preventDefault();next();} return; }
-  if(/^[0-9]$/.test(e.key)&&phase==='q'){ const i=e.key==='0'?9:+e.key-1; const b=$('opts').querySelectorAll('.o')[i]; if(b&&!b.disabled) b.click(); return; }
+  if(e.key==='Enter'||e.key===' '){ if(phase==='q'&&kbuf){e.preventDefault();return submitBuf();} if(waiting||phase==='end'){e.preventDefault();next();} return; }
+  if(e.key==='Backspace'&&phase==='q'&&kbuf){ kbuf=kbuf.slice(0,-1); clearTimeout(kT); showBuf(); return; }
+  if(/^[0-9]$/.test(e.key)&&phase==='q'){ typeKey(e.key); return; }
   if(e.key==='h'||e.key==='H') hint();
   if(e.key==='l'||e.key==='L') $('wrap').classList.toggle('nolegend');
 });
