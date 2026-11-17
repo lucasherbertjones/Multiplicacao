@@ -27,6 +27,11 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
 - `strat(x)`: estratégia de 1 linha. Usa o fator mais fácil (ordem `EASE`: 1, 10, 2, 5, 9, 4, 3, 6, 8, 7)
   e deriva a conta das "âncoras" (×1, ×2, ×5, ×10): "vezes 6 é vezes 5 e mais uma vez: 35 + 7 = 42".
   Com `hide=true` (dica antes de responder), para no "= ?" e não mostra notas que entregam o resultado.
+- `stratL(x)`: estratégia do modo "número que falta" (`a × ? = p`). Ensina a achar o **?**, e não a
+  calcular `p`, que já está na tela: atalho pelas âncoras (×1, ×2, ×5, ×10, ou "fica entre 5 e 10"
+  comparando com a × 5 e a × 10) e contagem de a em a com o número de pulos. Com `hide=true` não entrega
+  o número. **Lição:** cada modo de pergunta precisa da sua própria explicação; reaproveitar a do
+  resultado no modo inverso confunde.
 - `SPECIAL`: notas para as contas que mais confundem (7×8 "5, 6, 7, 8", 6×8 e 7×7, 6×9 e 7×8…).
 - `CONF`: pegadinhas por resultado (48↔49, 54↔56, 63↔64…). `optionsR()` usa, nesta ordem: `CONF`, as
   contas vizinhas (a×(b±1), (a±1)×b), a soma a+b, os algarismos trocados e, por fim, outros produtos próximos.
@@ -71,10 +76,10 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
 
 ## Como testar
 - Playwright já vem instalado no ambiente de nuvem: `require('playwright')` funciona direto.
-- O jogo expõe `window.__T = {strat, optionsR, checkFacts}` para os testes.
+- O jogo expõe `window.__T = {strat, stratL, optionsR, checkFacts}` para os testes.
 - Testes que valeram a pena:
   - para todas as 90 contas: a estratégia contém o resultado, toda conta escrita nela ("35 + 7 = 42",
-    "7 × 8 = 56") está certa, e `optionsR` devolve n opções únicas entre 1 e 100 com a certa incluída;
+    "7 × 8 = 56") está certa, `stratL` dá o número que falta (e a versão de dica não o entrega), e `optionsR` devolve n opções únicas entre 1 e 100 com a certa incluída;
   - jogar os 12 níveis pelo teclado, lendo a conta em `#qBig`, com um erro proposital por nível e sem
     erros no console;
   - semear o `localStorage`: tudo dominado (a rodada não pode ficar vazia), resposta lenta (não mexe no

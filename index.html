@@ -196,6 +196,21 @@ function strat(x,hide){
   const nine=(a===9||b===9)&&p>=10?` Na tabuada do 9, os algarismos somam 9: ${String(p).split('').join(' + ')} = 9.`:'';
   return pre+S+(SPECIAL[x.k]?' '+SPECIAL[x.k]:'')+nine;
 }
+/* Estratégia para o "número que falta" (a × ? = p): ensina a achar o ?, não a calcular p, que já está na tela.
+   hide = dica antes de responder: não entrega o número. */
+function stratL(x,hide){
+  const {a,b,p}=x, R=hide?'?':b;
+  let short='';
+  if(b===1) short=`O resultado é o próprio ${a}, então o que falta é ${R}.`;
+  else if(b===10) short=`${p} é o ${a} com um zero no fim, e pôr um zero no fim é vezes ${R}.`;
+  else if(b===2) short=`${p} é o dobro de ${a} (${a} + ${a}), e dobro é vezes ${R}.`;
+  else if(b===5) short=`${p} é a metade de ${a} × 10 = ${10*a}, e metade de vezes 10 é vezes ${R}.`;
+  else { const lo=b<5?1:5, hi=b<5?5:10;
+    short=`Compare com as fáceis: ${a} × ${lo} = ${a*lo} e ${a} × ${hi} = ${a*hi}, então o que falta fica entre ${lo} e ${hi}.`; }
+  const seq=Array.from({length:hide?Math.min(3,b-1):b},(_,i)=>a*(i+1));
+  const count=hide?(b>1?` Ou conte de ${a} em ${a} até ${p}: ${seq.join(', ')}… Quantos pulos?`:''):(b>1?` Contando de ${a} em ${a}: ${seq.join(', ')} → ${b} pulos.`:'');
+  return short+count;
+}
 const LEVELS=[null,
   {n:'Primeiras tabuadas',d:'Tabuadas do 2, do 5 e do 10, com 4 opções',tabs:[2,5,10],mode:'R',nopt:4},
   {n:'Mais 3 e 4',d:'Entram as tabuadas do 3 e do 4, com 6 opções',tabs:[2,3,4,5,10],mode:'R',nopt:6,focus:[3,4]},
@@ -446,7 +461,7 @@ function finish(x,ans,right,partial){
     setTimeout(()=>{ if(phase==='fb'&&!waiting) next(); }, fast?450:1600);
   } else {
     S.streak=0; x.miss=true; waiting=true;
-    $('fb').innerHTML=`<div class="box bad">${chip(x)}<span class="ex">Você respondeu <b>${ans}</b>. ${diagnose(x,ans,partial)}<br><b>Dica:</b> ${strat(x)}</span><button class="btn go" id="bGo">Continuar ⏎</button></div>`;
+    $('fb').innerHTML=`<div class="box bad">${chip(x)}<span class="ex">Você respondeu <b>${ans}</b>. ${diagnose(x,ans,partial)}<br><b>Dica:</b> ${x.mode.endsWith('L')?stratL(x):strat(x)}</span><button class="btn go" id="bGo">Continuar ⏎</button></div>`;
     $('bGo').onclick=next;
     renderRound(); updateHUD(); save();
     setTimeout(()=>$('bGo')&&$('bGo').focus({preventScroll:true}),30);
@@ -518,7 +533,7 @@ function hint(){
     const btns=[...$('opts').querySelectorAll('.o')].filter(b=>b.dataset.o!==String(correct)&&!b.disabled);
     shuffle(btns).slice(0,Math.ceil(btns.length/2)).forEach(b=>b.disabled=true);
   }
-  const tip=x.mode.endsWith('L')?`Conte de ${x.a} em ${x.a} até chegar a ${x.p}: ${x.a}, ${2*x.a}, ${3*x.a}… Quantos pulos você deu?`:strat(x,true);
+  const tip=x.mode.endsWith('L')?stratL(x,true):strat(x,true);
   $('fb').innerHTML=`<div class="box hint"><span class="ex"><b>Dica:</b> ${tip} <i>(acerto com dica vale metade dos pontos)</i></span></div>`;
   $('bHint').disabled=true;
   if($('wIn')) $('wIn').focus();
@@ -611,7 +626,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='l'||e.key==='L') $('wrap').classList.toggle('nolegend');
 });
 
-window.__T={strat,optionsR,checkFacts:()=>FACTS}; // usado pelos testes automáticos
+window.__T={strat,stratL,optionsR,checkFacts:()=>FACTS}; // usado pelos testes automáticos
 renderLegend(); updateHUD(); newRound();
 }
 </script>
