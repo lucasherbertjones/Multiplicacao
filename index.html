@@ -226,8 +226,10 @@ const LEVELS=[null,
   {n:'Escrita mestre',d:'Digite resultado ou número que falta já a partir da etapa 2; o resto no modo Mestre',tabs:ALL,mode:'DL',write:1,nocolor:true,nohint:true,tricky:true,fast:true}
 ];
 const MAXL=LEVELS.length-1;
-const LIMIT={R:6000,L:6000,D:8000,WD:8000,WL:8000}; // tempo para a resposta contar como "rápida" (domínio)
-const limitFor=(mode,lv)=>Math.round(LIMIT[mode]*(LEVELS[lv].fast?.75:1));
+/* Tempo para a resposta contar como "rápida" (domínio). LIMIT é o tempo do último nível; nos anteriores
+   a barra é mais lenta, proporcional ao nível: SLOW vezes mais tempo no nível 1, caindo em linha reta até 1× no 12. */
+const LIMIT={R:4500,L:4500,D:6000,WD:6000,WL:6000}, SLOW=3;
+const limitFor=(mode,lv)=>Math.round(LIMIT[mode]*(1+(SLOW-1)*(MAXL-lv)/(MAXL-1))/100)*100;
 const MODE_N={R:'resultado',D:'algarismo por algarismo',L:'número que falta',WD:'escrita do resultado',WL:'escrita do número que falta'};
 const MK_N={R:'resultado',D:'por algarismos',L:'número que falta'};
 
@@ -355,7 +357,7 @@ function renderLegend(){
 const chip=x=>{const c=color(x.a,x.b);return `<span class="chip" style="background:${c.bg};color:${c.fg}">${x.a} × ${x.b} = ${x.p}</span>`;};
 function btnHTML(val,i,x,label){ const L=LEVELS[S.level], c=L.nocolor?{bg:'var(--line)',fg:'var(--ink)'}:color(x.a);
   return `<button class="o" data-o="${val}" style="--sw:${c.bg};--swt:${c.fg}"><span class="v">${label??val}</span></button>`; }
-function pills(x,txt,cls=''){ $('qPills').innerHTML=`<span class="mode ${cls}">${txt}</span>${x.review?'<span class="mode rev">★ revisão</span>':''}`; }
+function pills(x,txt,cls=''){ $('qPills').innerHTML=`<span class="mode ${cls}">${txt}</span><span class="mode" title="Responda antes de a barra encher para a conta contar como dominada">⏱ ${sec(limitFor(x.mode,S.level))}</span>${x.review?'<span class="mode rev">★ revisão</span>':''}`; }
 
 /* ===== Opções do modo "resultado": a resposta certa e pegadinhas plausíveis, em ordem crescente ===== */
 /* A posição da resposta certa é sorteada (pode ser a 1ª, a última ou qualquer outra): escolhe quantas

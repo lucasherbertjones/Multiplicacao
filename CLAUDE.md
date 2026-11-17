@@ -50,9 +50,11 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
    as difíceis se derivam delas. Também existe a ordem "misturada".
 3. **Feedback instantâneo.** Acerto rápido avança em 0,45 s. Acerto lento mostra o tempo e avança em
    1,6 s. Erro mostra a conta certa, o diagnóstico e a estratégia; continua com Enter.
-4. **Fluência (novidade).** Uma barra de tempo enche durante a pergunta. Os limites ficam em `LIMIT`:
-   6 s para resultado e para o número que falta, 8 s para algarismos e escrita, ×0,75 nos níveis
-   "Mestre". **Só acerto rápido e sem dica sobe no domínio.** Acerto lento conta para a precisão, mas
+4. **Fluência (novidade).** Uma barra de tempo enche durante a pergunta, e o limite aparece ao lado do
+   modo ("⏱ 13,5 s"). **A barra fica mais rápida a cada nível**: `LIMIT` é o tempo do nível 12 (4,5 s
+   para resultado e número que falta, 6 s para algarismos e escrita), e o nível 1 tem `SLOW` = 3 vezes
+   esse tempo, caindo em linha reta até 1× no nível 12 (`limitFor`). Exemplos: nível 1 = 13,5 s,
+   nível 6 = 9,4 s, nível 7 (algarismos) = 11,5 s, nível 12 = 4,5 s ou 6 s. **Só acerto rápido e sem dica sobe no domínio.** Acerto lento conta para a precisão, mas
    não sobe nem zera o domínio.
 5. **12 níveis**, com subida automática (85% nas últimas 20 respostas), descida (abaixo de 50%) e
    seleção manual:
@@ -91,7 +93,7 @@ Público: 7 a 10 anos. Textos curtos e simples, em português do Brasil. Fatores
   - jogar os 12 níveis pelo teclado, lendo a conta em `#qBig`, com um erro proposital por nível e sem
     erros no console;
   - semear o `localStorage`: tudo dominado (a rodada não pode ficar vazia), resposta lenta (não mexe no
-    domínio) e escrita no nível 11 (etapa 3 em `D:`).
+    domínio; no nível 1 precisa esperar mais de 13,5 s) e escrita no nível 11 (etapa 3 em `D:`).
 - Testar também: a posição da certa em `optionsR` é uniforme (≈ 1/n para n = 4, 6, 8, 10); digitar "1" e
   "0" responde 10; "1" sozinho espera e responde 1 sem contar a espera; dois algarismos no modo resultado.
 - Cuidado com nomes de classe CSS: o espaço da resposta usa `.slot.fill`, porque `.done` já é o texto
